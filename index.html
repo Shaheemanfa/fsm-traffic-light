@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Traffic Signal FSM</title>
+<link rel="stylesheet" href="style.css">
+<style>
+
+
+
+header h1 span {
+    color: #22d3ee;
+}
+
+header p {
+    margin-top: 10px;
+
+    color: #94a3b8;
+
+    letter-spacing: 2px;
+}
+
+
+/* ================= SIMULATION ================= */
+
+.simulation {
+
+    position: relative;
+
+    width: 720px;
+    height: 650px;
+
+    max-width: 94vw;
+
+    margin: auto;
+
+    overflow: hidden;
+
+    border-radius: 35px;
+
+    border: 2px solid #334155;
+
+    background: #111827;
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.7),
+        0 0 50px rgba(34,211,238,.08);
+}
+
+
+/* ================= ROADS ================= */
+
+.vertical-road {
+
+    position: absolute;
+
+    width: 260px;
+    height: 100%;
+
+    left: 50%;
+    transform: translateX(-50%);
+
+    background: #252b34;
+
+    border-left: 3px solid #475569;
+    border-right: 3px solid #475569;
+}
+
+.horizontal-road {
+
+    position: absolute;
+
+    width: 100%;
+    height: 260px;
+
+    top: 50%;
+    transform: translateY(-50%);
+
+    background: #252b34;
+
+    border-top: 3px solid #475569;
+    border-bottom: 3px solid #475569;
+}
+
+
+/* ================= ROAD LINES ================= */
+
+.vertical-road::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    top: 0;
+
+    width: 4px;
+    height: 100%;
+
+    transform: translateX(-50%);
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            #facc15 0 30px,
+            transparent 30px 60px
+        );
+}
+
+.horizontal-road::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 50%;
+    left: 0;
+
+    width: 100%;
+    height: 4px;
+
+    transform: translateY(-50%);
+
+    background:
+        repeating-linear-gradient(
+            to right,
+            #facc15 0 30px,
+            transparent 30px 60px
+        );
+}
+
+
+/* ================= CROSSWALK ================= */
+
+.crosswalk {
+    position: absolute;
+
+    width: 260px;
+    height: 35px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    background:
+        repeating-linear-gradient(
+            90deg,
+            white 0 12px,
+            transparent 12px 22px
+        );
+
+    opacity: .8;
+
+    z-index: 2;
+}
+
+.crosswalk.top {
+    top: calc(50% - 165px);
+}
+
+.crosswalk.bottom {
+    bottom: calc(50% - 165px);
+}
+
+
+/* ================= DIRECTIONS ================= */
+
+.direction {
+
+    position: absolute;
+
+    z-index: 20;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    letter-spacing: 3px;
+
+    color: #cbd5e1;
+
+    text-shadow: 0 0 12px rgba(255,255,255,.4);
+}
+
+.direction span {
+
+    display: block;
+
+    text-align: center;
+
+    color: #22d3ee;
+
+    font-size: 20px;
+
+    margin-bottom: 3px;
+}
+
+.north-label {
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.south-label {
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.east-label {
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.west-label {
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
+/* ================= TRAFFIC LIGHT ================= */
+
+.traffic-light {
+
+    position: absolute;
+
+    width: 72px;
+    height: 190px;
+
+    padding: 10px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-around;
+
+    align-items: center;
+
+    background: #05070b;
+
+    border: 3px solid #475569;
+
+    border-radius: 20px;
+
+    z-index: 15;
+
+    box-shadow:
+        0 15px 30px rgba(0,0,0,.8);
+}
+
+
+/* ================= LIGHTS ================= */
+
+.light {
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    background: #171717;
+
+    border: 2px solid #374151;
+
+    transition: .3s ease;
+}
+
+
+/* ================= POSITIONS ================= */
+
+.traffic-light.north {
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.traffic-light.south {
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.traffic-light.east {
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.traffic-light.west {
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
+/* ================= CENTER ================= */
+
+.intersection-center {
+
+    position: absolute;
+
+    width: 100px;
+    height: 100px;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 10;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    background: #020617;
+
+    border: 2px solid #6366f1;
+
+    box-shadow:
+        0 0 30px rgba(99,102,241,.5);
+}
+
+.center-title {
+
+    color: #22d3ee;
+
+    font-size: 22px;
+
+    font-weight: bold;
+}
+
+.center-subtitle {
+
+    color: #64748b;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+
+/* ================= STATUS ================= */
+
+.control-panel {
+
+    width: 720px;
+
+    max-width: 94vw;
+
+    margin: 25px auto;
+
+    padding: 20px 25px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    background: rgba(15,23,42,.9);
+
+    border: 1px solid #334155;
+
+    border-radius: 20px;
+
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+}
+
+.status-label {
+
+    display: block;
+
+    color: #64748b;
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 7px;
+}
+
+#state {
+
+    font-size: 24px;
+
+    color: #22d3ee;
+
+    text-shadow: 0 0 15px rgba(34,211,238,.5);
+}
+
+.timer-box {
+
+    width: 65px;
+    height: 65px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    border: 2px solid #22d3ee;
+
+    background: #020617;
+
+    box-shadow:
+        0 0 20px rgba(34,211,238,.2);
+}
+
+#timer {
+
+    font-size: 25px;
+
+    font-weight: bold;
+
+    color: #22d3ee;
+}
+
+.timer-box small {
+
+    color: #64748b;
+
+    font-size: 7px;
+}
+
+
+/* ================= FSM ================= */
+
+.fsm-panel {
+
+    width: 720px;
+
+    max-width: 94vw;
+
+    margin: 25px auto;
+
+    padding: 20px;
+
+    background: rgba(15,23,42,.8);
+
+    border: 1px solid #334155;
+
+    border-radius: 20px;
+}
+
+.fsm-heading {
+
+    text-align: center;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 18px;
+}
+
+.fsm-heading span {
+
+    color: #22d3ee;
+}
+
+.state-flow {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+.state {
+
+    padding: 9px 13px;
+
+    background: #1e293b;
+
+    border: 1px solid #475569;
+
+    border-radius: 8px;
+
+    font-size: 12px;
+
+    font-weight: bold;
+}
+
+.arrow {
+
+    color: #22d3ee;
+
+    font-weight: bold;
+}
+
+
+/* ================= MOBILE ================= */
+
+@media(max-width:700px) {
+
+    .simulation {
+
+        height: 90vw;
+    }
+
+    .vertical-road {
+
+        width: 36%;
+    }
+
+    .horizontal-road {
+
+        height: 36%;
+    }
+
+    .traffic-light {
+
+        width: 55px;
+        height: 145px;
+    }
+
+    .light {
+
+        width: 31px;
+        height: 31px;
+    }
+
+    .traffic-light.north {
+        top: 25px;
+    }
+
+    .traffic-light.south {
+        bottom: 25px;
+    }
+
+    .traffic-light.east {
+        right: 25px;
+    }
+
+    .traffic-light.west {
+        left: 25px;
+    }
+
+    .direction {
+
+        font-size: 9px;
+
+        letter-spacing: 2px;
+    }
+
+    .direction span {
+
+        font-size: 15px;
+    }
+
+    .intersection-center {
+
+        width: 75px;
+        height: 75px;
+    }
+
+    .center-title {
+
+        font-size: 17px;
+    }
+
+}
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+/* TABLETS */
+@media (max-width: 900px) {
+
+    body {
+        padding: 20px;
+    }
+
+    .simulation {
+        width: min(90vw, 650px);
+        height: min(80vw, 580px);
+    }
+
+    .control-panel,
+    .fsm-panel {
+        width: min(90vw, 650px);
+    }
+
+    .traffic-light {
+        transform: scale(0.85);
+    }
+
+    .direction-label {
+        transform: scale(0.9);
+    }
+}
+
+
+/* PHONES */
+@media (max-width: 600px) {
+
+    body {
+        padding: 12px;
+        overflow-x: hidden;
+    }
+
+    header {
+        margin-bottom: 15px;
+    }
+
+    header h1 {
+        font-size: clamp(24px, 8vw, 38px);
+        line-height: 1.1;
+    }
+
+    header p {
+        font-size: 12px;
+    }
+
+    .simulation {
+        width: 94vw;
+        height: 94vw;
+        max-width: 500px;
+        max-height: 500px;
+        border-radius: 24px;
+    }
+
+    .vertical-road {
+        width: 32%;
+    }
+
+    .horizontal-road {
+        height: 32%;
+    }
+
+    .traffic-light {
+        transform: scale(0.65);
+    }
+
+    .direction-label {
+        transform: scale(0.7);
+    }
+
+    .north-label {
+        top: 3%;
+    }
+
+    .south-label {
+        bottom: 3%;
+    }
+
+    .west-label {
+        left: 3%;
+    }
+
+    .east-label {
+        right: 3%;
+    }
+
+    .intersection-center {
+        transform: scale(0.7);
+    }
+
+    .control-panel,
+    .fsm-panel {
+        width: 94vw;
+        max-width: 500px;
+        box-sizing: border-box;
+    }
+
+    .control-panel {
+        padding: 16px;
+
+  /* =========================================
+   PREMIUM DARK FUTURISTIC THEME
+   ========================================= */
+
+body {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(0, 255, 200, 0.10), transparent 35%),
+        radial-gradient(circle at 10% 90%, rgba(90, 60, 255, 0.12), transparent 35%),
+        radial-gradient(circle at 90% 80%, rgba(0, 180, 255, 0.08), transparent 35%),
+        #05070d;
+
+    color: #ffffff;
+}
+
+
+/* MAIN HEADING */
+
+header h1 {
+    font-family: "Arial Black", "Segoe UI", sans-serif;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+
+    color: #ffffff;
+
+    text-shadow:
+        0 0 10px rgba(0, 255, 210, 0.35),
+        0 0 30px rgba(0, 255, 210, 0.15);
+}
+
+
+/* SIMULATOR WORD */
+
+header h1 span {
+    color: #00ffd5;
+
+    text-shadow:
+        0 0 8px rgba(0, 255, 213, 0.8),
+        0 0 25px rgba(0, 255, 213, 0.35);
+}
+
+
+/* SUBTITLE */
+
+header p {
+    font-family: "Segoe UI", sans-serif;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #8fa7b5;
+}
+
+
+/* FSM BADGE */
+
+.badge {
+    font-family: "Segoe UI", sans-serif;
+    letter-spacing: 2px;
+    font-weight: 700;
+
+    color: #00ffd5;
+
+    border: 1px solid rgba(0, 255, 213, 0.35);
+
+    background: rgba(0, 255, 213, 0.06);
+
+    box-shadow:
+        0 0 15px rgba(0, 255, 213, 0.08),
+        inset 0 0 15px rgba(0, 255, 213, 0.04);
+}
+
+
+/* PANEL TEXT */
+
+.control-panel,
+.fsm-panel {
+    background: rgba(8, 12, 20, 0.88);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+
+/* FSM TITLE */
+
+.fsm-panel h3,
+.control-panel h3 {
+    font-family: "Segoe UI", sans-serif;
+    letter-spacing: 2px;
+}
+
+
+/* CURRENT STATE */
+
+#state {
+    font-family: "Arial Black", "Segoe UI", sans-serif;
+    letter-spacing: 2px;
+    text-shadow:
+        0 0 12px rgba(0, 255, 213, 0.35);
+}
+
+
+/* TIMER */
+
+#timer {
+    font-family: "Arial Black", "Segoe UI", sans-serif;
+    text-shadow:
+        0 0 15px rgba(255, 255, 255, 0.25);
+}  
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <div class="badge">
+        FINITE STATE MACHINE
+    </div>
+
+    <h1>
+        TRAFFIC SIGNAL <span>SIMULATOR</span>
+    </h1>
+
+    <p>
+        Four-Way Intelligent Traffic Control
+    </p>
+
+</header>
+
+
+<main>
+
+
+<section class="simulation">
+
+
+    <!-- ROADS -->
+
+    <div class="vertical-road"></div>
+
+    <div class="horizontal-road"></div>
+
+
+    <!-- CROSSWALKS -->
+
+    <div class="crosswalk top"></div>
+
+    <div class="crosswalk bottom"></div>
+
+
+    <!-- DIRECTIONS -->
+
+    <div class="direction north-label">
+        <span>N</span>
+        NORTH
+    </div>
+
+    <div class="direction south-label">
+        <span>S</span>
+        SOUTH
+    </div>
+
+    <div class="direction east-label">
+        <span>E</span>
+        EAST
+    </div>
+
+    <div class="direction west-label">
+        <span>W</span>
+        WEST
+    </div>
+
+
+    <!-- NORTH TRAFFIC LIGHT -->
+
+    <div class="traffic-light north">
+
+        <div class="light red"></div>
+
+        <div class="light yellow"></div>
+
+        <div class="light green"></div>
+
+    </div>
+
+
+    <!-- SOUTH TRAFFIC LIGHT -->
+
+    <div class="traffic-light south">
+
+        <div class="light red"></div>
+
+        <div class="light yellow"></div>
+
+        <div class="light green"></div>
+
+    </div>
+
+
+    <!-- EAST TRAFFIC LIGHT -->
+
+    <div class="traffic-light east">
+
+        <div class="light red"></div>
+
+        <div class="light yellow"></div>
+
+        <div class="light green"></div>
+
+    </div>
+
+
+    <!-- WEST TRAFFIC LIGHT -->
+
+    <div class="traffic-light west">
+
+        <div class="light red"></div>
+
+        <div class="light yellow"></div>
+
+        <div class="light green"></div>
+
+    </div>
+
+
+    <!-- CENTER FSM -->
+
+    <div class="intersection-center">
+
+        <div class="center-title">
+            FSM
+        </div>
+
+        <div class="center-subtitle">
+            CONTROL
+        </div>
+
+    </div>
+
+
+</section>
+
+
+<!-- CURRENT STATE -->
+
+<section class="control-panel">
+
+    <div>
+
+        <span class="status-label">
+            CURRENT FSM STATE
+        </span>
+
+        <strong id="state">
+            NORTH GREEN
+        </strong>
+
+    </div>
+
+
+    <div class="timer-box">
+
+        <span id="timer">
+            5
+        </span>
+
+        <small>
+            SEC
+        </small>
+
+    </div>
+
+</section>
+
+
+<!-- FSM SEQUENCE -->
+
+<section class="fsm-panel">
+
+    <div class="fsm-heading">
+
+        <span>FSM</span>
+        STATE SEQUENCE
+
+    </div>
+
+
+    <div class="state-flow">
+
+        <div class="state">S1</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S2</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S3</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S4</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S5</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S6</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S7</div>
+
+        <div class="arrow">→</div>
+
+        <div class="state">S8</div>
+
+    </div>
+
+</section>
+
+
+</main>
+
+
+<script>
+
+
+const states = [
+
+    {
+        name: "NORTH GREEN",
+        time: 5,
+        direction: "north",
+        colour: "green"
+    },
+
+    {
+        name: "NORTH YELLOW",
+        time: 2,
+        direction: "north",
+        colour: "yellow"
+    },
+
+    {
+        name: "SOUTH GREEN",
+        time: 5,
+        direction: "south",
+        colour: "green"
+    },
+
+    {
+        name: "SOUTH YELLOW",
+        time: 2,
+        direction: "south",
+        colour: "yellow"
+    },
+
+    {
+        name: "EAST GREEN",
+        time: 5,
+        direction: "east",
+        colour: "green"
+    },
+
+    {
+        name: "EAST YELLOW",
+        time: 2,
+        direction: "east",
+        colour: "yellow"
+    },
+
+    {
+        name: "WEST GREEN",
+        time: 5,
+        direction: "west",
+        colour: "green"
+    },
+
+    {
+        name: "WEST YELLOW",
+        time: 2,
+        direction: "west",
+        colour: "yellow"
+    }
+
+];
+
+
+let currentState = 0;
+
+let timeLeft = states[0].time;
+
+
+/* ================================
+   CREATE CARS
+================================ */
+
+function createCars() {
+
+    const simulation =
+        document.querySelector(".simulation");
+
+    if (!simulation) return;
+
+
+    const directions = [
+        "north",
+        "south",
+        "east",
+        "west"
+    ];
+
+
+    directions.forEach(function(direction) {
+
+        for (let i = 0; i < 2; i++) {
+
+            const car =
+                document.createElement("div");
+
+            car.className =
+                "vehicle " +
+                direction +
+                "-car";
+
+
+            /*
+            Put cars at different
+            starting positions
+            */
+
+            if (direction === "north") {
+
+                car.style.top =
+                    (5 + i * 18) + "%";
+
+            }
+
+            if (direction === "south") {
+
+                car.style.top =
+                    (75 - i * 18) + "%";
+
+            }
+
+            if (direction === "east") {
+
+                car.style.left =
+                    (75 - i * 18) + "%";
+
+            }
+
+            if (direction === "west") {
+
+                car.style.left =
+                    (5 + i * 18) + "%";
+
+            }
+
+
+            simulation.appendChild(car);
+
+        }
+
+    });
+
+}
+
+
+/* ================================
+   MOVE CARS
+================================ */
+
+function updateCars() {
+
+    const state =
+        states[currentState];
+
+
+    const cars =
+        document.querySelectorAll(".vehicle");
+
+
+    /* STOP ALL CARS */
+
+    cars.forEach(function(car) {
+
+        car.classList.remove("moving");
+
+    });
+
+
+    /* MOVE GREEN DIRECTION */
+
+    if (state.colour === "green") {
+
+        const movingCars =
+            document.querySelectorAll(
+                "." +
+                state.direction +
+                "-car"
+            );
+
+
+        movingCars.forEach(function(car) {
+
+            car.classList.add("moving");
+
+        });
+
+    }
+
+}
+
+
+/* ================================
+   TRAFFIC LIGHTS
+================================ */
+
+function updateLights() {
+
+    const state =
+        states[currentState];
+
+
+    const directions = [
+        "north",
+        "south",
+        "east",
+        "west"
+    ];
+
+
+    /* ALL RED */
+
+    directions.forEach(function(direction) {
+
+        const red =
+            document.querySelector(
+                "." + direction + " .red"
+            );
+
+        const yellow =
+            document.querySelector(
+                "." + direction + " .yellow"
+            );
+
+        const green =
+            document.querySelector(
+                "." + direction + " .green"
+            );
+
+
+        if (!red || !yellow || !green)
+            return;
+
+
+        red.style.background = "red";
+
+        red.style.boxShadow =
+            "0 0 30px red";
+
+
+        yellow.style.background =
+            "#171717";
+
+        yellow.style.boxShadow =
+            "none";
+
+
+        green.style.background =
+            "#171717";
+
+        green.style.boxShadow =
+            "none";
+
+    });
+
+
+    /* ACTIVE DIRECTION */
+
+    const activeRed =
+        document.querySelector(
+            "." +
+            state.direction +
+            " .red"
+        );
+
+
+    if (activeRed) {
+
+        activeRed.style.background =
+            "#171717";
+
+        activeRed.style.boxShadow =
+            "none";
+
+    }
+
+
+    /* ACTIVE LIGHT */
+
+    const activeLight =
+        document.querySelector(
+            "." +
+            state.direction +
+            " ." +
+            state.colour
+        );
+
+
+    if (activeLight) {
+
+        activeLight.style.background =
+            state.colour;
+
+        activeLight.style.boxShadow =
+            "0 0 35px " +
+            state.colour;
+
+    }
+
+
+    /* UPDATE TEXT */
+
+    const stateText =
+        document.getElementById("state");
+
+    const timer =
+        document.getElementById("timer");
+
+
+    if (stateText) {
+
+        stateText.innerText =
+            state.name;
+
+    }
+
+
+    if (timer) {
+
+        timer.innerText =
+            timeLeft;
+
+    }
+
+
+    /* UPDATE VEHICLES */
+
+    updateCars();
+
+}
+
+
+/* ================================
+   NEXT FSM STATE
+================================ */
+
+function nextState() {
+
+    currentState++;
+
+
+    if (currentState >= states.length) {
+
+        currentState = 0;
+
+    }
+
+
+    timeLeft =
+        states[currentState].time;
+
+
+    updateLights();
+
+}
+
+
+/* ================================
+   START
+================================ */
+
+createCars();
+
+updateLights();
+
+
+/* ================================
+   TIMER
+================================ */
+
+setInterval(function() {
+
+    timeLeft--;
+
+
+    if (timeLeft <= 0) {
+
+        nextState();
+
+    }
+
+    else {
+
+        const timer =
+            document.getElementById("timer");
+
+        if (timer) {
+
+            timer.innerText =
+                timeLeft;
+
+        }
+
+    }
+
+}, 1000);
+
+</script>
+
+<script>
+
+const states = [
+    { name: "NORTH GREEN", time: 5, direction: "north", colour: "green" },
+    { name: "NORTH YELLOW", time: 2, direction: "north", colour: "yellow" },
+
+    { name: "SOUTH GREEN", time: 5, direction: "south", colour: "green" },
+    { name: "SOUTH YELLOW", time: 2, direction: "south", colour: "yellow" },
+
+    { name: "EAST GREEN", time: 5, direction: "east", colour: "green" },
+    { name: "EAST YELLOW", time: 2, direction: "east", colour: "yellow" },
+
+    { name: "WEST GREEN", time: 5, direction: "west", colour: "green" },
+    { name: "WEST YELLOW", time: 2, direction: "west", colour: "yellow" }
+];
+
+
+let currentState = 0;
+let timeLeft = states[0].time;
+
+
+/* =========================
+   CREATE VEHICLES
+========================= */
+
+function createCars() {
+
+    const simulation = document.querySelector(".simulation");
+
+    if (!simulation) return;
+
+    const directions = ["north", "south", "east", "west"];
+
+    directions.forEach(function(direction) {
+
+        for (let i = 0; i < 2; i++) {
+
+            const car = document.createElement("div");
+
+            car.className = "vehicle " + direction + "-car";
+
+            simulation.appendChild(car);
+        }
+    });
+}
+
+
+/* =========================
+   TRAFFIC LIGHTS
+========================= */
+
+function updateLights() {
+
+    const state = states[currentState];
+
+    const directions = [
+        "north",
+        "south",
+        "east",
+        "west"
+    ];
+
+
+    /* Make every direction RED */
+
+    directions.forEach(function(direction) {
+
+        const red = document.querySelector(
+            "." + direction + " .red"
+        );
+
+        const yellow = document.querySelector(
+            "." + direction + " .yellow"
+        );
+
+        const green = document.querySelector(
+            "." + direction + " .green"
+        );
+
+        if (!red || !yellow || !green) return;
+
+        red.style.background = "red";
+        red.style.boxShadow = "0 0 30px red";
+
+        yellow.style.background = "#171717";
+        yellow.style.boxShadow = "none";
+
+        green.style.background = "#171717";
+        green.style.boxShadow = "none";
+    });
+
+
+    /* Turn OFF red for active direction */
+
+    const activeRed = document.querySelector(
+        "." + state.direction + " .red"
+    );
+
+    if (activeRed) {
+        activeRed.style.background = "#171717";
+        activeRed.style.boxShadow = "none";
+    }
+
+
+    /* Turn ON GREEN or YELLOW */
+
+    const activeLight = document.querySelector(
+        "." +
+        state.direction +
+        " ." +
+        state.colour
+    );
+
+    if (activeLight) {
+
+        activeLight.style.background = state.colour;
+
+        activeLight.style.boxShadow =
+            "0 0 35px " + state.colour;
+    }
+
+
+    /* Update state text */
+
+    const stateText =
+        document.getElementById("state");
+
+    const timer =
+        document.getElementById("timer");
+
+
+    if (stateText) {
+        stateText.innerText = state.name;
+    }
+
+    if (timer) {
+        timer.innerText = timeLeft;
+    }
+
+
+    /* Vehicle control */
+
+    updateCars();
+}
+
+
+/* =========================
+   VEHICLE CONTROL
+========================= */
+
+function updateCars() {
+
+    const state = states[currentState];
+
+    const cars =
+        document.querySelectorAll(".vehicle");
+
+
+    /* Stop EVERY car */
+
+    cars.forEach(function(car) {
+
+        car.classList.remove("moving");
+
+    });
+
+
+    /* Move only GREEN direction */
+
+    if (state.colour === "green") {
+
+        const movingCars =
+            document.querySelectorAll(
+                "." +
+                state.direction +
+                "-car"
+            );
+
+
+        movingCars.forEach(function(car) {
+
+            car.classList.add("moving");
+
+        });
+    }
+}
+
+
+/* =========================
+   NEXT FSM STATE
+========================= */
+
+function nextState() {
+
+    currentState++;
+
+    if (currentState >= states.length) {
+        currentState = 0;
+    }
+
+    timeLeft =
+        states[currentState].time;
+
+    updateLights();
+}
+
+
+/* =========================
+   START
+========================= */
+
+createCars();
+
+updateLights();
+
+
+/* =========================
+   TIMER
+========================= */
+
+setInterval(function() {
+
+    timeLeft--;
+
+    if (timeLeft <= 0) {
+
+        nextState();
+
+    } else {
+
+        const timer =
+            document.getElementById("timer");
+
+        if (timer) {
+            timer.innerText = timeLeft;
+        }
+    }
+
+}, 1000);
+
+</script>
+
+
+
+</body>
+
+</html>
